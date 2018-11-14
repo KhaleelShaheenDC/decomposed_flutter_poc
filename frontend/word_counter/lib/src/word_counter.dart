@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class WordCounter extends StatefulWidget {
   @override
@@ -32,17 +33,23 @@ class _WordCounterState extends State<WordCounter> {
     );
   }
 
-  void inputChanged(value) {
-    setState(() {
-      result = calculateWords(value);
+  void inputChanged(text) {
+    calculateWords(text).then((value) {
+      setState(() {
+        result = value;
+      });
     });
   }
-  final unixNewLine = '\n';
 
-
-  int calculateWords(String text) {
-    var words = text.split(' ');
-    words.removeWhere((word) => word.length == 0 || word == " ");
-    return words.length;
+  Future<int> calculateWords(String text) async {
+    http.Response response =
+        await http.post('http://localhost:8080/wordcounter', body: {
+      'words': text,
+    });
+    if (response?.statusCode == 200) {
+      var data = response.body;
+      return int.parse(data);
+    }
+    return null;
   }
 }
