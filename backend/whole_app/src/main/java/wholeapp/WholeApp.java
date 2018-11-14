@@ -7,7 +7,7 @@ import wordcounter.WordCounter;
 public class WholeApp extends Jooby {
 
   {
-    path("/wholeapp/", () -> {
+    path("/", () -> {
       use(new Adder());
       use(new WordCounter());
     });
