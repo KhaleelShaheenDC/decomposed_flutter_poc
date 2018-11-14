@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class Adder extends StatefulWidget {
   @override
@@ -8,6 +9,7 @@ class Adder extends StatefulWidget {
 }
 
 class AdderState extends State<Adder> {
+  final scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController num1Controller = TextEditingController();
   final TextEditingController num2Controller = TextEditingController();
   int result = 0;
@@ -15,6 +17,7 @@ class AdderState extends State<Adder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 64.0),
         child: Column(
@@ -28,7 +31,6 @@ class AdderState extends State<Adder> {
                 Expanded(
                   child: TextField(
                     controller: num1Controller,
-                    onChanged: inputChanged,
                     keyboardType: TextInputType.number,
                   ),
                 ),
@@ -43,11 +45,15 @@ class AdderState extends State<Adder> {
                 Expanded(
                   child: TextField(
                     controller: num2Controller,
-                    onChanged: inputChanged,
                     keyboardType: TextInputType.number,
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 32.0),
+            RaisedButton(
+              onPressed: calculateResult,
+              child: Text('Add'),
             ),
             SizedBox(height: 32.0),
             Row(
@@ -63,14 +69,32 @@ class AdderState extends State<Adder> {
     );
   }
 
-  void inputChanged(v) {
-    setState(() {
-      result = addTwoNumbers(
-          int.parse(num1Controller.text), int.parse(num2Controller.text));
+  void calculateResult() {
+    if (num1Controller.text.isEmpty || num2Controller.text.isEmpty) {
+      scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text('Please enter valid integers'),
+      ));
+      return;
+    }
+    addTwoNumbers(
+            int.parse(num1Controller.text), int.parse(num2Controller.text))
+        .then((value) {
+      setState(() {
+        result = value;
+      });
     });
   }
 
-  int addTwoNumbers(int num1, int num2) {
-    return num1 + num2;
+  Future<int> addTwoNumbers(int num1, int num2) async {
+    http.Response response =
+        await http.post('http://localhost:8080/adder', body: {
+      'a': '$num1',
+      'b': '$num2',
+    });
+    if (response?.statusCode == 200) {
+      var data = response.body;
+      return int.parse(data);
+    }
+    return null;
   }
 }
